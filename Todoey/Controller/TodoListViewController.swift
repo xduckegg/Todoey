@@ -10,14 +10,13 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
     
-    let itemArray = ["Find Mike", "Buy Eggos", "Destroy Demogorgon"]
+    var itemArray = ["Find Mike", "Buy Eggos", "Destroy Demogorgon"]
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
     }
     
-    //MARK - Tableview Datasource Methods
+    //MARK: - Tableview Datasource Methods
     //-----------------------------------
     
     // how many items in the table
@@ -32,7 +31,7 @@ class TodoListViewController: UITableViewController {
         return cell
     }
     
-    //MARK - Tableview Delegate Methods
+    // MARK: Tableview Delegate Methods
     //---------------------------------
     
     //when a cell is selected
@@ -49,6 +48,32 @@ class TodoListViewController: UITableViewController {
         
     }
     
+    //MARK: - Add New Items
+    //--------------------
+    
+    
+    @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
+        
+        var textField = UITextField()
+        // create alert
+        let alert = UIAlertController(title: "Add new Todo Item", message: "", preferredStyle: .alert)
+        let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
+            
+            // what will happen once the user clicked on the add button on the UIAlert
+           
+            self.itemArray.append(textField.text!)
+            self.tableView.reloadData()
+            
+            
+        }
+        //add text field to the alert
+        alert.addTextField { (alertTextField) in
+            alertTextField.placeholder = "Create new item"
+            textField = alertTextField
+        }
+        alert.addAction(action)
+        present(alert, animated: true, completion: nil)
+    }
     
     
 }
