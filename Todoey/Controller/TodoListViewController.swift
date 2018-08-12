@@ -5,17 +5,13 @@ import UIKit
 class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
-    //create instanse to save the data on the phone
-    let defaults = UserDefaults.standard
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
     
     override func viewDidLoad() {
         super.viewDidLoad()
-     
         
-        //retrieve the saved data if exists
-        if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
-            itemArray = items
-        }
+         //retrieve the saved data if exists
+        loadItems()
         
     }
     
@@ -33,10 +29,9 @@ class TodoListViewController: UITableViewController {
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
         cell.textLabel?.text = item.title
         
-        
         //display check mark using tinary operator
         cell.accessoryType = item.done ? .checkmark : .none
-       
+        
         return cell
         
     }
@@ -50,6 +45,7 @@ class TodoListViewController: UITableViewController {
         // Trigger a checkmark
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
+        saveItems()
         tableView.reloadData()
         
         //to stop the permenant highlight when we select a cell
@@ -76,9 +72,10 @@ class TodoListViewController: UITableViewController {
             newItem.title = textField.text!
             
             self.itemArray.append(newItem)
-            self.defaults.set(self.itemArray, forKey: "TodoListArray")
-            self.tableView.reloadData()
             
+            self.saveItems()
+            
+            self.tableView.reloadData()
             
         }
         //add text field to the alert
@@ -89,7 +86,29 @@ class TodoListViewController: UITableViewController {
         alert.addAction(action)
         present(alert, animated: true, completion: nil)
     }
+    //MARK - Model Manupulation Methods
     
+    func saveItems(){
+        let encoder = PropertyListEncoder()
+        do {
+            let data = try encoder.encode(itemArray)
+            try data.write(to: dataFilePath!)
+            
+        } catch {
+            print("Error encoding")
+        }
+    }
+    func loadItems() {
+        
+        if let data = try? Data(contentsOf: dataFilePath!) {
+            let decoder = PropertyListDecoder()
+            do {
+                itemArray = try decoder.decode([Item].self, from: data)
+                
+            } catch {
+                print("Error dencoding")
+            }
+        }
+    }
     
 }
-
