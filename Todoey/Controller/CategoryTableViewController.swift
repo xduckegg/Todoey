@@ -2,18 +2,23 @@
 
 import UIKit
 import CoreData
+import RealmSwift
 
 class CategoryTableViewController: UITableViewController {
     
-    var categories = [Category]()
-    let context = (UIApplication.shared.delegate as! AppDelegate) .persistentContainer.viewContext
+    // safe to force unwrap it
+    
+    let realm = try! Realm()
+   
+    var categories: Results<Category>?
+    
     
     
     override func viewDidLoad() {
         
         super.viewDidLoad()
         
-        loadCategories()
+          loadCategories()
     }
     
     
@@ -25,14 +30,12 @@ class CategoryTableViewController: UITableViewController {
         let action = UIAlertAction(title: "Add Category", style: .default) { (action) in
             
             // what will happen once the user clicked on the add button on the UIAlert
-            let newCategory = Category(context: self.context)
+            let newCategory = Category()
+            
             newCategory.name = textField.text!
             
-            self.categories.append(newCategory)
+            self.save(category: newCategory)
             
-            self.saveCategories()
-            
-            self.tableView.reloadData()
             
         }
         alert.addAction(action)
@@ -49,15 +52,15 @@ class CategoryTableViewController: UITableViewController {
     //MARK: - Tableview Datasource Methods
     //-----------------------------------
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return categories.count
+        return categories?.count ?? 1
     }
     //insert data in the table
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let category = categories[indexPath.row]
+        let category = categories?[indexPath.row]
         let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
         
-        cell.textLabel?.text = category.name
+        cell.textLabel?.text = category?.name ?? "No Categories add yet"
         
         
         return cell
@@ -74,16 +77,18 @@ class CategoryTableViewController: UITableViewController {
         let destinationVC = segue.destination as! TodoListViewController
         
         if let indexPath = tableView.indexPathForSelectedRow {
-            destinationVC.selectedCategory = categories[indexPath.row]
+            destinationVC.selectedCategory = categories?[indexPath.row]
         }
     }
     
     //MARK:  Model Manupulation Methods
     //---------------------------------
-    func saveCategories(){
+    func save(category: Category){
         
         do {
-            try context.save()
+            try realm.write {
+                realm.add(category)
+            }
             
         } catch {
             print("Error saving context with \(error)")
@@ -92,14 +97,11 @@ class CategoryTableViewController: UITableViewController {
     }
     
     
-    //if the request is not provided use Item.fetchRequest()
-    func loadCategories(with request: NSFetchRequest<Category> = Category.fetchRequest()) {
+  
+    func loadCategories() {
         
-        do{
-            categories = try context.fetch(request)
-        }catch{
-            print("Error Fetching data from context \(error)")
-        }
+         categories = realm.objects(Category.self)
+        
         tableView.reloadData()
     }
     
