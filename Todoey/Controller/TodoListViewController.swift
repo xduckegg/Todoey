@@ -3,13 +3,14 @@
 import UIKit
 import RealmSwift
 
-class TodoListViewController: UITableViewController {
+class TodoListViewController: SwipeTableViewController {
     let realm = try! Realm()
     var todoItems : Results<Item>?
     
     var selectedCategory: Category?{
         didSet{
             loadItems()
+            navigationItem.title = selectedCategory?.name
         }
     }
     
@@ -32,8 +33,8 @@ class TodoListViewController: UITableViewController {
     //insert data in the table
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
-        
+       // let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         if let item = todoItems?[indexPath.row] {
             
             cell.textLabel?.text = item.title
@@ -129,6 +130,22 @@ class TodoListViewController: UITableViewController {
         tableView.reloadData()
     }
     
+    override func updateModel(at indexPath: IndexPath) {
+        
+        
+        if let itemToDelete = self.todoItems?[indexPath.row]{
+            do{
+                try self.realm.write{
+                    self.realm.delete(itemToDelete)
+                    
+                }
+            } catch{
+                print("error deleteing category \(error)")
+            }
+            
+        }
+    }
+    
    
     
 }
@@ -137,9 +154,15 @@ class TodoListViewController: UITableViewController {
 extension TodoListViewController: UISearchBarDelegate{
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        if !searchBar.text!.isEmpty{
         todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: true)
 
         tableView.reloadData()
+        }
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+        
     }
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         if searchBar.text?.count != 0 {

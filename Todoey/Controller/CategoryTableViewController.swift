@@ -1,15 +1,18 @@
 
 
 import UIKit
-import CoreData
+
 import RealmSwift
 
-class CategoryTableViewController: UITableViewController {
+
+class CategoryTableViewController: SwipeTableViewController {
+    
+    
     
     // safe to force unwrap it
     
     let realm = try! Realm()
-   
+    
     var categories: Results<Category>?
     
     
@@ -18,7 +21,8 @@ class CategoryTableViewController: UITableViewController {
         
         super.viewDidLoad()
         
-          loadCategories()
+        loadCategories()
+        tableView.rowHeight = 80.0
     }
     
     
@@ -30,12 +34,14 @@ class CategoryTableViewController: UITableViewController {
         let action = UIAlertAction(title: "Add Category", style: .default) { (action) in
             
             // what will happen once the user clicked on the add button on the UIAlert
-            let newCategory = Category()
-            
-            newCategory.name = textField.text!
-            
-            self.save(category: newCategory)
-            
+            if textField.text!.count > 0 {
+                
+                let newCategory = Category()
+                
+                newCategory.name = textField.text!
+                
+                self.save(category: newCategory)
+            }
             
         }
         alert.addAction(action)
@@ -52,20 +58,20 @@ class CategoryTableViewController: UITableViewController {
     //MARK: - Tableview Datasource Methods
     //-----------------------------------
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        
         return categories?.count ?? 1
     }
     //insert data in the table
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         let category = categories?[indexPath.row]
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
-        
         cell.textLabel?.text = category?.name ?? "No Categories add yet"
-        
         
         return cell
         
     }
+    
+    
     
     // MARK: Tableview Delegate Methods
     //---------------------------------
@@ -97,12 +103,27 @@ class CategoryTableViewController: UITableViewController {
     }
     
     
-  
+    
     func loadCategories() {
         
-         categories = realm.objects(Category.self)
+        categories = realm.objects(Category.self)
         
         tableView.reloadData()
+    }
+    override func updateModel(at indexPath: IndexPath) {
+        
+        
+        if let categoryToDelete = self.categories?[indexPath.row]{
+            do{
+                try self.realm.write{
+                    self.realm.delete(categoryToDelete)
+                    
+                }
+            } catch{
+                print("error deleteing category \(error)")
+            }
+            
+        }
     }
     
 }
